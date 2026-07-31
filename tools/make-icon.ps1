@@ -1,5 +1,6 @@
-# Generates src\app.ico (16..256) and docs\icon-preview.png from the "G" logo:
-# dark rounded tile, green power-ring, amber bolt through the top gap.
+# Generates src\app.ico (16..256) and docs\icon-preview.png from the "E3" logo:
+# dark rounded tile, bar chart whose peak bar is an amber lightning bolt
+# (green bar, amber bolt, red bar - the widget's load colors).
 $ErrorActionPreference = 'Stop'
 $root = Split-Path -Parent (Split-Path -Parent $MyInvocation.MyCommand.Path)
 
@@ -14,13 +15,14 @@ using System.IO;
 public static class IconMaker
 {
     static readonly Color Tile = Color.FromArgb(22, 22, 28);
-    static readonly Color Ring = Color.FromArgb(90, 200, 120);
-    static readonly Color Bolt = Color.FromArgb(240, 200, 80);
+    static readonly Color Green = Color.FromArgb(90, 200, 120);
+    static readonly Color Amber = Color.FromArgb(240, 200, 80);
+    static readonly Color Red = Color.FromArgb(240, 110, 90);
 
-    // bolt offsets from ring center, in fractions of icon size
+    // flat-top bolt vertices, in fractions of icon size
     static readonly float[,] B = {
-        {0.04f,-0.31f},{-0.09f,-0.09f},{-0.01f,-0.09f},{-0.05f,0.07f},
-        {0.10f,-0.15f},{0.01f,-0.15f},{0.06f,-0.31f}
+        {0.589f,0.144f},{0.411f,0.522f},{0.511f,0.522f},{0.444f,0.844f},
+        {0.656f,0.444f},{0.556f,0.444f},{0.633f,0.144f}
     };
 
     static GraphicsPath RoundRect(float x, float y, float w, float h, float r)
@@ -35,11 +37,11 @@ public static class IconMaker
         return p;
     }
 
-    static PointF[] BoltPts(float s, float cx, float cy, float scale)
+    static PointF[] BoltPts(float s)
     {
         var pts = new PointF[7];
         for (int i = 0; i < 7; i++)
-            pts[i] = new PointF(cx + B[i, 0] * scale * s, cy + B[i, 1] * scale * s);
+            pts[i] = new PointF(B[i, 0] * s, B[i, 1] * s);
         return pts;
     }
 
@@ -92,24 +94,15 @@ public static class IconMaker
                 using (var tb = new SolidBrush(Tile))
                     g.FillPath(tb, tile);
 
-                if (s >= 32)
-                {
-                    float cx = 0.5f * s, cy = 0.54f * s, r = 0.33f * s;
-                    using (var pen = new Pen(Ring, 0.085f * s))
-                    {
-                        pen.StartCap = LineCap.Round;
-                        pen.EndCap = LineCap.Round;
-                        g.DrawArc(pen, cx - r, cy - r, r * 2, r * 2, 310, 280);
-                    }
-                    using (var bb = new SolidBrush(Bolt))
-                        g.FillPolygon(bb, BoltPts(s, cx, cy, 1.25f));
-                }
-                else
-                {
-                    // small sizes: tile + big bolt only, ring omitted for legibility
-                    using (var bb = new SolidBrush(Bolt))
-                        g.FillPolygon(bb, BoltPts(s, 0.5f * s, 0.764f * s, 2.2f));
-                }
+                float rad = Math.Max(0.75f, 0.039f * s);
+                using (var br = new SolidBrush(Green))
+                using (var p = RoundRect(0.178f * s, 0.544f * s, 0.167f * s, 0.267f * s, rad))
+                    g.FillPath(br, p);
+                using (var br = new SolidBrush(Amber))
+                    g.FillPolygon(br, BoltPts(s));
+                using (var br = new SolidBrush(Red))
+                using (var p = RoundRect(0.667f * s, 0.422f * s, 0.167f * s, 0.389f * s, rad))
+                    g.FillPath(br, p);
             }
         }
         return bmp;

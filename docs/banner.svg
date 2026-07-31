@@ -1,12 +1,10 @@
 <svg width="520" height="120" viewBox="0 0 520 120" xmlns="http://www.w3.org/2000/svg" role="img">
   <title>WattAWidget</title>
-  <desc>Bar chart with a lightning bolt cut out of the bars, next to the app name.</desc>
+  <desc>Bar chart whose peak bar is a lightning bolt, next to the app name.</desc>
   <rect x="0" y="0" width="120" height="120" rx="26" fill="#16161C"/>
-  <rect x="17" y="66" width="17" height="36" rx="4" fill="#5AC878"/>
-  <rect x="39" y="47" width="17" height="55" rx="4" fill="#5AC878"/>
-  <rect x="61" y="29" width="17" height="73" rx="4" fill="#F0C850"/>
-  <rect x="83" y="53" width="17" height="49" rx="4" fill="#F06E5A"/>
-  <path d="M67 19 L41 58 L56 58 L48 87 L77 47 L62 47 L70 19 Z" fill="#16161C"/>
+  <rect x="21.4" y="65.3" width="20" height="32" rx="4.7" fill="#5AC878"/>
+  <path d="M70.7 17.3 L49.3 62.7 L61.3 62.7 L53.3 101.3 L78.7 53.3 L66.7 53.3 L76 17.3 Z" fill="#F0C850"/>
+  <rect x="80" y="50.7" width="20" height="46.7" rx="4.7" fill="#F06E5A"/>
   <text x="144" y="66" font-family="Segoe UI, Arial, sans-serif" font-size="42" font-weight="700" fill="#5AC878">Watt</text>
   <text x="240" y="66" font-family="Segoe UI, Arial, sans-serif" font-size="42" font-weight="700" fill="#F0C850">A</text>
   <text x="272" y="66" font-family="Segoe UI, Arial, sans-serif" font-size="42" font-weight="300" fill="#8A8A96">Widget</text>
