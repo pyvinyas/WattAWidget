@@ -906,8 +906,25 @@ namespace WattAWidget
             }
         }
 
+        int uiTicks;
+        int lastSavedBaseN;
+
         void UiTick()
         {
+            // Persist the continuously-learned calibration every ~5 min so a force-kill
+            // or power loss doesn't discard it (SaveSettings otherwise only runs on UI
+            // events and clean exit).
+            if (++uiTicks % 150 == 0)
+            {
+                int bn;
+                lock (sync) { bn = baseN; }
+                if (bn != lastSavedBaseN)
+                {
+                    SaveSettings();
+                    lastSavedBaseN = bn;
+                }
+            }
+
             // Win+D minimizes us along with everything else; quietly come back.
             if (WindowState == FormWindowState.Minimized)
                 Native.ShowWindow(Handle, Native.SW_SHOWNOACTIVATE);
@@ -1072,9 +1089,14 @@ namespace WattAWidget
                 string theme = themeMode == 1 ? "light" : themeMode == 2 ? "dark" : "auto";
                 double off; int offn;
                 lock (sync) { off = baseOffset; offn = baseN; }
-                File.WriteAllText(settingsFile, string.Format(CultureInfo.InvariantCulture,
+                string content = string.Format(CultureInfo.InvariantCulture,
                     "x={0}\r\ny={1}\r\nview={2}\r\ntheme={3}\r\noffset={4:0.00}\r\noffsetn={5}\r\nrate={6:0.####}\r\n",
-                    Location.X, Location.Y, viewMode, theme, off, offn, costRate));
+                    Location.X, Location.Y, viewMode, theme, off, offn, costRate);
+                // write-then-replace so a crash mid-write can't corrupt the file
+                string tmp = settingsFile + ".tmp";
+                File.WriteAllText(tmp, content);
+                if (File.Exists(settingsFile)) File.Replace(tmp, settingsFile, null);
+                else File.Move(tmp, settingsFile);
             }
             catch { }
         }
