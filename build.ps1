@@ -76,4 +76,6 @@ $csc = "$env:WINDIR\Microsoft.NET\Framework64\v4.0.30319\csc.exe"
 if ($LASTEXITCODE -ne 0) { throw "Compilation failed ($LASTEXITCODE)" }
 # DLLs are embedded in the exe now; remove leftovers from older builds
 Remove-Item (Join-Path $bin 'LibreHardwareMonitorLib.dll'), (Join-Path $bin 'HidSharp.dll') -ErrorAction SilentlyContinue
+# standalone ico beside the exe (shortcuts reference it to dodge stale icon caches)
+Copy-Item "$root\src\app.ico" (Join-Path $bin 'WattAWidget.ico') -Force
 Write-Host "Built: $bin\WattAWidget.exe (single file)"
