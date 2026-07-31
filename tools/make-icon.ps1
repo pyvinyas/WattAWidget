@@ -45,7 +45,44 @@ public static class IconMaker
 
     public static byte[] RenderPng(int s)
     {
-        using (var bmp = new Bitmap(s, s, PixelFormat.Format32bppArgb))
+        using (var bmp = Render(s))
+        using (var ms = new MemoryStream())
+        {
+            bmp.Save(ms, ImageFormat.Png);
+            return ms.ToArray();
+        }
+    }
+
+    // Classic uncompressed 32bpp DIB entry (BITMAPINFOHEADER + BGRA bottom-up + AND mask).
+    // Windows only reliably decodes PNG entries at 256px; smaller sizes must be BMP.
+    public static byte[] RenderBmpEntry(int s)
+    {
+        using (var bmp = Render(s))
+        using (var ms = new MemoryStream())
+        using (var w = new BinaryWriter(ms))
+        {
+            int andStride = ((s + 31) / 32) * 4;
+            w.Write(40); w.Write(s); w.Write(s * 2);
+            w.Write((short)1); w.Write((short)32);
+            w.Write(0); w.Write(s * s * 4 + andStride * s);
+            w.Write(0); w.Write(0); w.Write(0); w.Write(0);
+            var data = bmp.LockBits(new Rectangle(0, 0, s, s), ImageLockMode.ReadOnly, PixelFormat.Format32bppArgb);
+            var row = new byte[s * 4];
+            for (int y = s - 1; y >= 0; y--)
+            {
+                System.Runtime.InteropServices.Marshal.Copy(
+                    new IntPtr(data.Scan0.ToInt64() + (long)y * data.Stride), row, 0, s * 4);
+                w.Write(row);
+            }
+            bmp.UnlockBits(data);
+            w.Write(new byte[andStride * s]);
+            return ms.ToArray();
+        }
+    }
+
+    static Bitmap Render(int s)
+    {
+        var bmp = new Bitmap(s, s, PixelFormat.Format32bppArgb);
         {
             using (var g = Graphics.FromImage(bmp))
             {
@@ -74,18 +111,14 @@ public static class IconMaker
                         g.FillPolygon(bb, BoltPts(s, 0.5f * s, 0.764f * s, 2.2f));
                 }
             }
-            using (var ms = new MemoryStream())
-            {
-                bmp.Save(ms, ImageFormat.Png);
-                return ms.ToArray();
-            }
         }
+        return bmp;
     }
 
     public static void WriteIco(string path, int[] sizes)
     {
-        var pngs = new List<byte[]>();
-        foreach (int s in sizes) pngs.Add(RenderPng(s));
+        var blobs = new List<byte[]>();
+        foreach (int s in sizes) blobs.Add(s >= 256 ? RenderPng(s) : RenderBmpEntry(s));
         using (var fs = new FileStream(path, FileMode.Create))
         using (var w = new BinaryWriter(fs))
         {
@@ -98,11 +131,11 @@ public static class IconMaker
                 w.Write((byte)(s >= 256 ? 0 : s));
                 w.Write((byte)0); w.Write((byte)0);
                 w.Write((short)1); w.Write((short)32);
-                w.Write(pngs[i].Length);
+                w.Write(blobs[i].Length);
                 w.Write(offset);
-                offset += pngs[i].Length;
+                offset += blobs[i].Length;
             }
-            foreach (var p in pngs) w.Write(p);
+            foreach (var b in blobs) w.Write(b);
         }
     }
 
