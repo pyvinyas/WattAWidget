@@ -1,14 +1,14 @@
-# yaml-language-server: $schema=https://aka.ms/winget-manifest.defaultLocale.1.6.0.schema.json
+﻿# yaml-language-server: $schema=https://aka.ms/winget-manifest.defaultLocale.1.6.0.schema.json
 PackageIdentifier: Vinyas.WattAWidget
 PackageVersion: 1.0.0
 PackageLocale: en-US
 Publisher: Vinyas
-PublisherUrl: https://github.com/<GITHUB_USER>
-PublisherSupportUrl: https://github.com/<GITHUB_USER>/WattAWidget/issues
+PublisherUrl: https://github.com/pyvinyas
+PublisherSupportUrl: https://github.com/pyvinyas/WattAWidget/issues
 PackageName: WattAWidget
-PackageUrl: https://github.com/<GITHUB_USER>/WattAWidget
+PackageUrl: https://github.com/pyvinyas/WattAWidget
 License: MIT
-LicenseUrl: https://github.com/<GITHUB_USER>/WattAWidget/blob/main/LICENSE
+LicenseUrl: https://github.com/pyvinyas/WattAWidget/blob/main/LICENSE
 ShortDescription: Desktop power draw widget with Screen Time-style history graphs
 Description: >-
   WattAWidget pins a small always-on-desktop widget that shows your PC's live
