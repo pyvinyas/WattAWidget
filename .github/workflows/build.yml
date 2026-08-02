@@ -42,3 +42,20 @@ jobs:
             ${{ steps.pkg.outputs.zip }}
             bin/WattAWidget.exe
           generate_release_notes: true
+
+  # Submits the version update to microsoft/winget-pkgs automatically.
+  # Requires: repo secret WINGET_TOKEN = classic PAT with public_repo scope.
+  # Note: only works after the package's initial PR has been merged, since
+  # wingetcreate derives the update from the published manifests.
+  winget:
+    needs: build
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: windows-latest
+    steps:
+      - name: Submit winget update
+        shell: powershell
+        run: |
+          $ver = "${{ github.ref_name }}".TrimStart('v')
+          $url = "https://github.com/pyvinyas/WattAWidget/releases/download/v$ver/WattAWidget-$ver-win-x64.zip"
+          Invoke-WebRequest https://aka.ms/wingetcreate/latest -OutFile wingetcreate.exe
+          .\wingetcreate.exe update Vinyas.WattAWidget --version $ver --urls $url --submit --token "${{ secrets.WINGET_TOKEN }}"

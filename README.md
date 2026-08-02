@@ -90,6 +90,18 @@ readings never need admin.
 `%LOCALAPPDATA%\WattAWidget` — delete it too for a full cleanup, plus
 `schtasks /Delete /TN WattAWidget /F` if you enabled autostart.
 
+## Releasing (maintainers)
+
+```
+powershell -ExecutionPolicy Bypass -File tools\release.ps1 -Version 1.0.1
+```
+
+That bumps the version, builds as a sanity check, commits, tags, and pushes.
+CI then compiles, publishes the GitHub release, and — via `wingetcreate` —
+submits the winget update PR automatically. One-time setup: add a repo secret
+`WINGET_TOKEN` (classic PAT, `public_repo` scope). The winget job only works
+once the package's initial winget-pkgs PR has been merged.
+
 ## License
 
 MIT — see [LICENSE](LICENSE). Bundles LibreHardwareMonitorLib (MPL-2.0) and
