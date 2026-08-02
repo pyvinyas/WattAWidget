@@ -34,11 +34,17 @@ $hidDll = Find-Lib $hidRoot 'HidSharp.dll' @('net472','net47','net35','netstanda
 Write-Host "Using LHM: $lhmDll"
 Write-Host "Using HidSharp: $hidDll"
 
-# Stop a running instance so the exe can be replaced; wait for file handles to release
+# Stop a running instance so the exe can be replaced: graceful --exit first (saves
+# settings, works across elevation), force-kill as fallback
 $proc = @(Get-Process WattAWidget -ErrorAction SilentlyContinue) + @(Get-Process WattWidget -ErrorAction SilentlyContinue)
 if ($proc) {
-    $proc | Stop-Process -Force
-    foreach ($p in $proc) { try { $p.WaitForExit(5000) } catch {} }
+    $exe = Join-Path $bin 'WattAWidget.exe'
+    if (Test-Path $exe) { & $exe --exit; Start-Sleep -Milliseconds 1500 }
+    $proc = @(Get-Process WattAWidget -ErrorAction SilentlyContinue) + @(Get-Process WattWidget -ErrorAction SilentlyContinue)
+    if ($proc) {
+        $proc | Stop-Process -Force -ErrorAction SilentlyContinue
+        foreach ($p in $proc) { try { $p.WaitForExit(5000) } catch {} }
+    }
     Start-Sleep -Milliseconds 500
 }
 

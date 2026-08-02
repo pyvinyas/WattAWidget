@@ -84,9 +84,11 @@ heuristics notice it. The library is a well-known open-source project (see
 administrator rights — right-click → *Restart as administrator*. Battery-mode
 readings never need admin.
 
-**Where's my data?** `%LOCALAPPDATA%\WattAWidget` — settings and per-minute
-CSVs. Delete the folder and the app's directory to fully uninstall (plus
-`schtasks /Delete /TN WattAWidget /F` if you enabled autostart).
+**How do I uninstall?** Exit the widget first — right-click → Exit, or run
+`wattawidget --exit` (winget can't remove a running exe). Then
+`winget uninstall wattawidget` (or delete the app folder). Your data lives in
+`%LOCALAPPDATA%\WattAWidget` — delete it too for a full cleanup, plus
+`schtasks /Delete /TN WattAWidget /F` if you enabled autostart.
 
 ## License
 

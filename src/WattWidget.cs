@@ -14,6 +14,7 @@ using System.Management;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+using System.Security.AccessControl;
 using System.Security.Principal;
 using System.Threading;
 using System.Windows.Forms;
@@ -65,6 +66,20 @@ namespace WattAWidget
         static void Main(string[] args)
         {
             AppDomain.CurrentDomain.AssemblyResolve += ResolveEmbedded;
+
+            // `WattAWidget --exit` asks a running instance (even an elevated one) to
+            // quit gracefully - used before winget uninstall/upgrade and by build.ps1.
+            if (args.Length > 0 && args[0] == "--exit")
+            {
+                try
+                {
+                    using (var ev = EventWaitHandle.OpenExisting("WattAWidget_Exit", EventWaitHandleRights.Modify))
+                        ev.Set();
+                }
+                catch { }
+                return;
+            }
+
             bool takeover = args.Length > 0 && args[0] == "--takeover";
             var mutex = new Mutex(false, "WattAWidget_SingleInstance");
             bool got = false;
@@ -307,11 +322,25 @@ namespace WattAWidget
         Color tGreen, tAmber, tRed, tBlue, tGridA, tGridB;
 
         readonly AutoResetEvent pollWake = new AutoResetEvent(false);
+        EventWaitHandle exitEvent;
         IVirtualDesktopManager vdm;
 
         public WidgetForm()
         {
             try { vdm = (IVirtualDesktopManager)new VirtualDesktopManagerCls(); } catch { vdm = null; }
+
+            // named exit event, writable by non-elevated callers even if we run elevated
+            try
+            {
+                var sec = new EventWaitHandleSecurity();
+                sec.AddAccessRule(new EventWaitHandleAccessRule(
+                    new SecurityIdentifier(WellKnownSidType.WorldSid, null),
+                    EventWaitHandleRights.Modify | EventWaitHandleRights.Synchronize,
+                    AccessControlType.Allow));
+                bool createdNew;
+                exitEvent = new EventWaitHandle(false, EventResetMode.ManualReset, "WattAWidget_Exit", out createdNew, sec);
+            }
+            catch { exitEvent = new EventWaitHandle(false, EventResetMode.ManualReset); }
             dataDir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "WattAWidget");
             // one-time migration from the app's old name
             string oldDir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "WattWidget");
@@ -773,7 +802,12 @@ namespace WattAWidget
             while (running)
             {
                 try { SampleOnce(); } catch { }
-                pollWake.WaitOne(2000);
+                int idx = WaitHandle.WaitAny(new WaitHandle[] { exitEvent, pollWake }, 2000);
+                if (idx == 0)
+                {
+                    running = false;
+                    try { if (IsHandleCreated && !IsDisposed) BeginInvoke((Action)Close); } catch { }
+                }
             }
         }
 
