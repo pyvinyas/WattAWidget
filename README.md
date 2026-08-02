@@ -96,7 +96,14 @@ readings never need admin.
 powershell -ExecutionPolicy Bypass -File tools\release.ps1 -Version 1.0.1
 ```
 
-That bumps the version, builds as a sanity check, commits, tags, and pushes.
+Or from Linux / macOS / WSL:
+
+```
+./tools/release.sh 1.0.1
+```
+
+That bumps the version, builds as a sanity check (PowerShell variant only —
+compilation needs Windows), commits, tags, and pushes.
 CI then compiles, publishes the GitHub release, and — via `wingetcreate` —
 submits the winget update PR automatically. One-time setup: add a repo secret
 `WINGET_TOKEN` (classic PAT, `public_repo` scope). The winget job only works
